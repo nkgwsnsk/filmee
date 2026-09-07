@@ -6,21 +6,45 @@ import { TagManager } from '../components/Interactive/TagManager.tsx';
 
 <Layout title="HOME | Filmee">
   <main class="max-w-4xl mx-auto p-6 space-y-10">
-    <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div class="space-y-4">
-        <h2 class="text-xl font-bold flex items-center gap-2">
-          <span>⭐</span> レビュー
-        </h2>
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <StarRating client:load />
-        </div>
-      </div>
 
-      <div class="space-y-4">
-        <h2 class="text-xl font-bold flex items-center gap-2">
-          <span>🏷️</span> タグ
-        </h2>
-        <TagManager client:load />
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold flex items-center gap-2">
+        <span>🎬</span> 映画一覧
+      </h2>
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <p>映画一覧のコンテンツがここに入ります。</p>
+      </div>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold flex items-center gap-2">
+        <span>❤️</span> マイリスト
+      </h2>
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <p>マイリストのコンテンツがここに入ります。</p>
+      </div>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold flex items-center gap-2">
+        <span>📝</span> 投稿欄
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div class="space-y-4">
+          <h3 class="text-xl font-bold flex items-center gap-2">
+            <span>⭐</span> レビュー
+          </h3>
+          <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <StarRating client:load />
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <h3 class="text-xl font-bold flex items-center gap-2">
+            <span>🏷️</span> タグ
+          </h3>
+          <TagManager client:load />
+        </div>
       </div>
     </section>
   </main>
