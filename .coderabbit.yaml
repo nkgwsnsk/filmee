@@ -1,0 +1,65 @@
+language: "ja-JP"
+early_access: false
+
+reviews:
+  profile: "assertive" # 最大精度・厳格モードで実行
+  request_changes_workflow: false
+  high_level_summary: true
+  sequence_diagrams: false
+  
+  # ルールエンジン設定
+  path_instructions:
+    - path: "**/*"
+      instructions: |
+        当リポジトリへのすべてのコード変更に対し、以下の要件を満たしているか厳格に静的解析およびレビューを行ってください。
+
+        ---
+
+        ## 1. セキュリティ検証基準 (Security)
+        以下に該当する実装を発見した場合、即座に指摘してください。
+
+        ### A. OWASP Top 10 & CWE 準拠
+        - CWE-89 (SQL Injection): プレースホルダー（バインド変数）を使用しない生クエリ組み立ての禁止。
+        - CWE-79 (Cross-Site Scripting - XSS): サニタイズやエスケープ処理のないHTMLレンダリング、`dangerouslySetInnerHTML` 等の使用防止。
+        - CWE-352 (CSRF): 状態を変更するAPI（POST/PUT/DELETE）におけるCSRFトークン検証漏れの検出。
+        - CWE-78 (OS Command Injection): 外部からの入力をシェルコマンド文字列として実行する処理の禁止。
+        - CWE-22 (Path Traversal): ファイルパスに対する適切な制限（`path.resolve` や正規化処理）の有無。
+
+        ### B. シークレット & 認証・認可
+        - CWE-798 (Hardcoded Credentials): APIキー、秘密鍵、JWTシークレット、DB接続文字列のソースコード内直書きの絶対禁止。
+        - CWE-285 (Improper Authorization): APIエンドポイントにおけるロールベースアクセス制御（RBAC）の欠落。
+
+        ---
+
+        ## 2. アクセシビリティ検証基準 (Accessibility / A11y)
+        WCAG 2.1 レベル AA 適合を強制します。
+
+        ### A. 構造とセマンティクス (WCAG 1.3.1, 4.1.2)
+        - セマンティックタグ: クリック可能な `<div>` や `<span>` の禁止。必ず `<button>` または `<a>` を使用すること。
+        - フォームコントロール: すべての `<input>`, `<select>`, `<textarea>` に対する明確な `<label>`（`htmlFor` / `id`）の紐付け。
+
+        ### B. キーボード操作とフォーカス (WCAG 2.1.1, 2.4.7)
+        - フォーカス可能性: インタラクティブな要素に対する `tabindex="-1"` の安易な付与禁止。
+        - フォーカスインジケータ: CSSでの `outline: none` または `outline: 0` によるフォーカス枠削除の検出（代替スタイルが用意されている場合を除く）。
+
+        ### C. ARIA属性と代替テキスト (WCAG 1.1.1, 4.1.2)
+        - 代替テキスト: `<img>` タグにおける `alt` 属性の必須化（装飾目的の場合は `alt=""` の明示）。
+        - ARIA整合性: `role` 属性および `aria-*` 属性（`aria-expanded`, `aria-label`, `aria-hidden` 等）の誤用・状態不整合のチェック。
+
+        ---
+
+        ## 3. 指摘用出力フォーマット (統一フォーマット)
+        発見した不備は、必ず以下の形式に整形して出力してください。フォーマットに従わない単なるコメント出力は禁止します。
+
+        ### 🚨 [指摘タイトル]
+
+        - **【重要度】**: [Critical / High / Medium / Low]
+        - **【カテゴリ】**: [Security (CWE-XXX) / Accessibility (WCAG X.X.X) / Code Quality]
+        - **【対象ファイル】**: `パス/ファイル名` (L:開始行-L:終了行)
+        - **【検出された問題】**: 具体的リスクおよび不備の根拠
+        - **【準拠標準】**: CWE-XXX または WCAG 2.1 成功基準 X.X.X
+        - **【修正コード案】**:
+        ```diff
+        - 修正前コード
+        + 修正後コード
+        ```

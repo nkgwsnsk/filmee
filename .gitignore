@@ -1,0 +1,15 @@
+# 依存パッケージ（一番重いフォルダ）
+node_modules/
+
+# Astro のビルド成果物やキャッシュ
+.astro/
+dist/
+
+# 環境変数（パスワードやAPIキーなどの機密情報）
+.env
+.env*.local
+
+# エディタやOSのキャッシュファイル
+.vscode/
+.DS_Store
+Thumbs.db
