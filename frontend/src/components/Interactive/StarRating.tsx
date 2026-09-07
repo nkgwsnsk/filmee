@@ -26,7 +26,9 @@ export const StarRating = ({ initialRating = 0, readonly = false, onChange }: Pr
           const isHalf = displayRating === starValue - 0.5;
 
           return (
-            <div
+            <button
+              type="button"
+              aria-label={`${starValue}つ星を選択`}
               key={i}
               className={`relative ${readonly ? '' : 'cursor-pointer'}`}
               style={{ width: '32px', height: '32px', minWidth: '32px' }} 
@@ -55,7 +57,7 @@ export const StarRating = ({ initialRating = 0, readonly = false, onChange }: Pr
               >
                 <Star className="text-yellow-400 fill-yellow-400 w-8 h-8" />
               </div>
-            </div>
+            </button>
           );
         })}
       </div>

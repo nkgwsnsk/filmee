@@ -21,14 +21,16 @@ export const TagManager = () => {
   return (
     <div className="p-4 bg-white rounded-xl border border-gray-200 space-y-4 shadow-sm">
       <div className="flex gap-2">
+        <label htmlFor="tag-input" className="sr-only">タグを追加</label>
         <input
+          id="tag-input"
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="タグを追加..."
           className="flex-1 px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
         />
-        <button onClick={handleAdd} className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+        <button type="button" aria-label="タグを追加" onClick={handleAdd} className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
           <Plus size={20} />
         </button>
       </div>
@@ -40,8 +42,8 @@ export const TagManager = () => {
             ) : (
               <span className="text-sm text-blue-700">#{tag.name}</span>
             )}
-            <button onClick={() => { setEditingId(tag.id); setEditValue(tag.name); }} className="text-blue-300 hover:text-blue-500"><Edit2 size={12}/></button>
-            <button onClick={() => setTags(tags.filter(t => t.id !== tag.id))} className="text-blue-300 hover:text-red-500"><X size={14}/></button>
+            <button type="button" aria-label={`タグ「${tag.name}」を編集`} onClick={() => { setEditingId(tag.id); setEditValue(tag.name); }} className="text-blue-300 hover:text-blue-500"><Edit2 size={12}/></button>
+            <button type="button" aria-label={`タグ「${tag.name}」を削除`} onClick={() => setTags(tags.filter(t => t.id !== tag.id))} className="text-blue-300 hover:text-red-500"><X size={14}/></button>
           </div>
         ))}
       </div>

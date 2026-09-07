@@ -6,6 +6,9 @@ reviews:
   request_changes_workflow: false
   high_level_summary: true
   sequence_diagrams: false
+  target_branches:
+    - "main"
+    - "develop"
   
   # ルールエンジン設定
   path_instructions:
