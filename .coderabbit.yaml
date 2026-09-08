@@ -2,19 +2,30 @@ language: "ja-JP"
 early_access: false
 
 reviews:
-  profile: "assertive" # 最大精度・厳格モードで実行
+  profile: "assertive"
   request_changes_workflow: false
   high_level_summary: true
   sequence_diagrams: false
+  auto_description: true
+  bother_three_times: false
+
+  # 対象のブランチ
   target_branches:
     - "main"
     - "develop"
   
+  # 除外ファイル設定
+  path_filters:
+    - "!pnpm-lock.yaml"
+    - "!node_modules/**"
+    - "!.astro/**"
+
   # ルールエンジン設定
   path_instructions:
     - path: "**/*"
       instructions: |
         当リポジトリへのすべてのコード変更に対し、以下の要件を満たしているか厳格に静的解析およびレビューを行ってください。
+        既存の変更されていないコードに対する指摘は除外してください。
 
         ---
 

@@ -1,0 +1,189 @@
+---
+export const prerender = false;
+
+import Layout from '../../layouts/Layout.astro';
+import { ReviewManager } from '../../components/Interactive/ReviewManager.tsx';
+import { FavoriteButton } from '../../components/Interactive/FavoriteButton.tsx';
+
+const token = import.meta.env.TMDB_ACCESS_TOKEN?.trim();
+const movieId = Astro.params.slug;
+
+let movie: any = null;
+let errorMessage = '';
+
+try {
+  if (!token || !movieId) {
+    throw new Error('映画IDまたはTMDBアクセストークンがありません');
+  }
+
+  const url = new URL(`https://api.themoviedb.org/3/movie/${movieId}`);
+  url.searchParams.set('language', 'ja-JP');
+  url.searchParams.set('append_to_response', 'credits,videos');
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`TMDBエラー: ${response.status} ${response.statusText}`);
+  }
+
+  movie = await response.json();
+} catch (error) {
+  console.error('映画詳細取得エラー:', error);
+  errorMessage =
+    error instanceof Error ? error.message : '映画情報を取得できませんでした';
+}
+
+const trailer = movie?.videos?.results?.find(
+  (video: any) =>
+    video.site === 'YouTube' &&
+    (video.type === 'Trailer' || video.type === 'Teaser'),
+);
+
+const cast = movie?.credits?.cast?.slice(0, 10) ?? [];
+const releaseYear = movie?.release_date?.slice(0, 4) ?? '公開年不明';
+const runtime = movie?.runtime
+  ? `${Math.floor(movie.runtime / 60)}時間${movie.runtime % 60}分`
+  : '時間情報なし';
+---
+
+<Layout title={movie ? `${movie.title} | Filmee` : '映画詳細 | Filmee'}>
+  <main class="min-h-screen bg-slate-950 text-white">
+    {errorMessage ? (
+      <div class="mx-auto max-w-4xl p-8">
+        <p class="text-red-400">{errorMessage}</p>
+        <a href="/" class="mt-4 inline-block text-indigo-400 hover:underline">
+          ← ホームへ戻る
+        </a>
+      </div>
+    ) : movie ? (
+      <>
+        <section class="relative isolate min-h-[420px] overflow-hidden">
+          {trailer ? (
+            <iframe
+              class="absolute inset-0 h-full w-full scale-150 object-cover opacity-40"
+              src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&mute=1&loop=1&playlist=${trailer.key}&controls=0&rel=0`}
+              title={`${movie.title} の予告動画`}
+              allow="autoplay; encrypted-media"
+              allowfullscreen
+            ></iframe>
+          ) : movie.backdrop_path ? (
+            <img
+              src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`}
+              alt=""
+              class="absolute inset-0 h-full w-full object-cover opacity-40"
+            />
+          ) : null}
+
+          <div class="absolute inset-0 -z-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-slate-950/30"></div>
+
+          <div class="relative z-10 mx-auto flex max-w-5xl items-end gap-8 px-6 pb-10 pt-16">
+            <img
+              src={
+                movie.poster_path
+                  ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                  : '/no-image.png'
+              }
+              alt={movie.title}
+              class="hidden w-56 rounded-xl shadow-2xl sm:block"
+            />
+
+            <div>
+              <a href="/" class="mb-6 inline-block text-indigo-300 hover:underline">
+                ← ホームへ戻る
+              </a>
+              <h1 class="text-3xl font-bold sm:text-5xl">{movie.title}</h1>
+              {movie.original_title !== movie.title && (
+                <p class="mt-2 text-slate-300">{movie.original_title}</p>
+              )}
+
+              <div class="mt-5 flex items-center gap-4">
+                <span>{releaseYear}</span>
+                <span>・</span>
+                <span>{runtime}</span>
+                <span>・</span>
+                <span>⭐ {movie.vote_average?.toFixed(1)}</span>
+
+                <FavoriteButton
+                  client:load
+                  movieId={String(movie.id)}
+                  movieTitle={movie.title}
+                  posterPath={movie.poster_path}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="mx-auto grid max-w-5xl gap-10 px-6 py-10 lg:grid-cols-[2fr_1fr]">
+          <div class="space-y-10">
+            <div>
+              <h2 class="mb-4 text-2xl font-bold">概要</h2>
+              <p class="leading-8 text-slate-300">
+                {movie.overview || '概要情報はありません。'}
+              </p>
+            </div>
+
+            <div>
+              <h2 class="mb-4 text-2xl font-bold">出演者</h2>
+              <div class="grid grid-cols-2 gap-4 sm:grid-cols-5">
+                {cast.map((person: any) => (
+                  <div class="overflow-hidden rounded-lg bg-slate-900">
+                    {person.profile_path ? (
+                      <img
+                        src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
+                        alt={person.name}
+                        class="aspect-[2/3] w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div class="flex aspect-[2/3] items-center justify-center text-xs text-slate-500">
+                        No Image
+                      </div>
+                    )}
+                    <div class="p-2">
+                      <p class="text-sm font-bold">{person.name}</p>
+                      <p class="mt-1 text-xs text-slate-400">{person.character}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <aside class="h-fit rounded-xl bg-slate-900 p-6">
+            <h2 class="mb-4 text-xl font-bold">作品情報</h2>
+            <dl class="space-y-4 text-sm">
+              <div>
+                <dt class="text-slate-400">公開日</dt>
+                <dd>{movie.release_date || '不明'}</dd>
+              </div>
+              <div>
+                <dt class="text-slate-400">上映時間</dt>
+                <dd>{runtime}</dd>
+              </div>
+              <div>
+                <dt class="text-slate-400">ジャンル</dt>
+                <dd>
+                  {movie.genres?.map((genre: any) => genre.name).join(' / ') || '不明'}
+                </dd>
+              </div>
+            </dl>
+          </aside>
+        </section>
+
+        <div class="mx-auto max-w-5xl px-6 pb-12">
+          <ReviewManager
+            client:load
+            movieId={String(movie.id)}
+            movieTitle={movie.title}
+          />
+        </div>
+      </>
+    ) : null}
+  </main>
+</Layout>

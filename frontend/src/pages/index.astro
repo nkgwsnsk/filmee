@@ -1,51 +1,348 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { StarRating } from '../components/Interactive/StarRating.tsx';
-import { TagManager } from '../components/Interactive/TagManager.tsx';
+import { MyList } from '../components/Interactive/MyList.tsx';
+
+const TMDB_ACCESS_TOKEN = import.meta.env.TMDB_ACCESS_TOKEN?.trim();
+const query = Astro.url.searchParams.get('q')?.trim() ?? '';
+
+let movies = [];
+let errorMessage = '';
+
+try {
+  if (!TMDB_ACCESS_TOKEN) {
+    throw new Error('TMDB_ACCESS_TOKEN が設定されていません');
+  }
+
+  const endpoint = query
+    ? 'https://api.themoviedb.org/3/search/movie'
+    : 'https://api.themoviedb.org/3/trending/movie/week';
+
+  const requestUrl = new URL(endpoint);
+  requestUrl.searchParams.set('language', 'ja-JP');
+
+  if (query) {
+    requestUrl.searchParams.set('query', query);
+    requestUrl.searchParams.set('include_adult', 'false');
+  }
+
+  const response = await fetch(requestUrl, {
+    headers: {
+      Authorization: `Bearer ${TMDB_ACCESS_TOKEN}`,
+      accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `TMDBエラー: ステータスコード ${response.status} (${response.statusText})`,
+    );
+  }
+
+  const data = await response.json();
+  movies = (data.results ?? []).slice(0, 10);
+} catch (error) {
+  console.error('❌ エラー詳細:', error);
+  errorMessage = `映画情報の取得に失敗しました。(${error instanceof Error ? error.message : '不明なエラー'})`;
+}
 ---
 
 <Layout title="HOME | Filmee">
   <main class="max-w-4xl mx-auto p-6 space-y-10">
 
     <section class="space-y-4">
-      <h2 class="text-xl font-bold flex items-center gap-2">
-        <span>🎬</span> 映画一覧
-      </h2>
-      <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <p>映画一覧のコンテンツがここに入ります。</p>
-      </div>
+      <form method="get" class="flex gap-2">
+        <input
+          type="search"
+          name="q"
+          value={query}
+          placeholder="映画名を検索"
+          class="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-white"
+        />
+        <button
+          type="submit"
+          class="rounded-lg bg-indigo-600 px-5 py-2 font-bold text-white hover:bg-indigo-500"
+        >
+          検索
+        </button>
+      </form>
+
     </section>
 
     <section class="space-y-4">
-      <h2 class="text-xl font-bold flex items-center gap-2">
-        <span>❤️</span> マイリスト
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold flex items-center gap-2">
+        {query ? `「${query}」の検索結果` : '🎬 トレンド映画一覧'}
       </h2>
-      <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <p>マイリストのコンテンツがここに入ります。</p>
+
+        <div class="flex gap-2">
+          <button
+            type="button"
+            data-slide-prev
+            class="rounded-full bg-slate-700 px-3 py-2 text-white hover:bg-indigo-600"
+            aria-label="前の映画"
+          >
+            ←
+          </button>
+          <button
+            type="button"
+            data-slide-next
+            class="rounded-full bg-slate-700 px-3 py-2 text-white hover:bg-indigo-600"
+            aria-label="次の映画"
+          >
+            →
+          </button>
+        </div>
+      </div>
+
+      {errorMessage && <p class="text-red-400">{errorMessage}</p>}
+
+      <div
+        data-movie-slider
+        class="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4"
+      >
+        {movies.map((movie: any) => (
+          <article
+            data-movie-id={movie.id}
+            class="movie-card min-w-[calc((100%-2rem)/3)] shrink-0 snap-start rounded-xl border border-slate-800 bg-slate-900 shadow-lg"
+            data-movie-title={movie.title}
+            data-movie-poster={movie.poster_path ? `https://image.tmdb.org/t/p/w185${movie.poster_path}` : ''}
+            data-movie-url={`/movie/${movie.id}`}
+          >
+            <div class="relative aspect-[2/3] overflow-hidden rounded-t-xl bg-slate-800">
+              <a href={`/movie/${movie.id}`} class="group block h-full">
+                {movie.poster_path ? (
+                  <img
+                    src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                    alt={movie.title}
+                    class="h-full w-full object-cover transition-opacity group-hover:opacity-80"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div class="flex h-full items-center justify-center text-sm text-slate-400">
+                    No Image
+                  </div>
+                )}
+              </a>
+
+              <div class="absolute right-2 top-2 rounded bg-slate-950/80 px-2 py-1 text-xs font-bold text-yellow-400">
+                ⭐ {movie.vote_average?.toFixed(1)}
+              </div>
+            </div>
+
+            <div class="p-4">
+              <a href={`/movie/${movie.id}`}>
+                <h3 class="line-clamp-2 font-bold text-sm text-white hover:text-indigo-400">
+                  {movie.title}
+                </h3>
+                <p class="mt-1 text-xs text-slate-400">
+                  {movie.release_date ? movie.release_date.split('-')[0] : '不明'}
+                </p>
+              </a>
+            </div>
+          </article>
+        ))}
       </div>
     </section>
 
-    <section class="space-y-4">
-      <h2 class="text-xl font-bold flex items-center gap-2">
-        <span>📝</span> 投稿欄
-      </h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <div class="space-y-4">
-          <h3 class="text-xl font-bold flex items-center gap-2">
-            <span>⭐</span> レビュー
-          </h3>
-          <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <StarRating client:load />
-          </div>
+    {!query && (
+      <section class="space-y-4">
+        <h2 class="text-xl font-bold">💓 マイリスト</h2>
+        <div class="rounded-xl border border-slate-800 bg-slate-900 p-4">
+          <MyList client:load />
         </div>
-
-        <div class="space-y-4">
-          <h3 class="text-xl font-bold flex items-center gap-2">
-            <span>🏷️</span> タグ
-          </h3>
-          <TagManager client:load />
-        </div>
-      </div>
-    </section>
+      </section>
+    )}
   </main>
 </Layout>
+
+<script>
+  const slider = document.querySelector<HTMLElement>('[data-movie-slider]');
+  const prevButton = document.querySelector<HTMLButtonElement>('[data-slide-prev]');
+  const nextButton = document.querySelector<HTMLButtonElement>('[data-slide-next]');
+
+  const slide = (direction: number) => {
+    if (!slider) return;
+
+    const card = slider.querySelector<HTMLElement>('.movie-card');
+    if (!card) return;
+
+    slider.scrollBy({
+      left: direction * (card.offsetWidth + 16),
+      behavior: 'smooth',
+    });
+  };
+
+  prevButton?.addEventListener('click', () => slide(-1));
+  nextButton?.addEventListener('click', () => slide(1));
+
+  const favoriteList = document.querySelector<HTMLElement>('[data-favorite-list]');
+
+  const favorites = new Set<string>(
+    JSON.parse(localStorage.getItem('favoriteMovies') ?? '[]'),
+  );
+
+  const renderFavoriteList = () => {
+    if (!favoriteList) return;
+
+    favoriteList.replaceChildren();
+
+    const reviews = JSON.parse(
+      localStorage.getItem('filmee-reviews') ?? '[]',
+    ) as Array<{ movieId: string }>
+
+    const reviewedMovieIds = new Set(
+      reviews.map((review) => String(review.movieId)),
+    )
+
+    const favoriteCards = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-movie-id]'),
+    ).filter((card) => favorites.has(card.dataset.movieId ?? ''))
+
+    if (favoriteCards.length === 0) {
+      const emptyMessage = document.createElement('p');
+      emptyMessage.className = 'text-slate-400';
+      emptyMessage.textContent = 'お気に入りの映画はありません。';
+      favoriteList.appendChild(emptyMessage);
+      return;
+    }
+
+    favoriteCards.forEach((card) => {
+      const movieId = card.dataset.movieId ?? '';
+
+      const item = document.createElement('a');
+      item.href = card.dataset.movieUrl ?? '#';
+      item.className =
+        'flex items-center gap-4 rounded-lg p-2 text-white transition hover:bg-slate-800';
+
+      const image = document.createElement('img');
+      image.src = card.dataset.moviePoster ?? '';
+      image.alt = card.dataset.movieTitle ?? '';
+      image.className = 'h-20 w-14 rounded object-cover';
+      image.loading = 'lazy';
+
+      const content = document.createElement('div');
+      content.className = 'flex flex-1 items-center justify-between gap-3';
+
+      const title = document.createElement('span');
+      title.className = 'font-bold';
+      title.textContent = card.dataset.movieTitle ?? 'タイトル不明';
+
+      content.appendChild(title);
+
+      if (reviewedMovieIds.has(movieId)) {
+        const badge = document.createElement('span');
+        badge.className =
+          'shrink-0 rounded-full bg-emerald-900 px-2 py-1 text-xs text-emerald-300';
+        badge.textContent = 'レビュー済み';
+        content.appendChild(badge);
+      }
+
+      item.append(image, content);
+      favoriteList.appendChild(item);
+    });
+  };
+
+  document
+    .querySelectorAll<HTMLButtonElement>('[data-favorite-id]')
+    .forEach((button) => {
+      const movieId = button.dataset.favoriteId;
+      if (!movieId) return;
+
+      const updateButton = () => {
+        const isFavorite = favorites.has(movieId);
+        button.textContent = isFavorite ? '♥' : '♡';
+        button.classList.toggle('text-red-500', isFavorite);
+        button.setAttribute('aria-pressed', String(isFavorite));
+      };
+
+      updateButton();
+
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (favorites.has(movieId)) {
+          favorites.delete(movieId);
+        } else {
+          favorites.add(movieId);
+        }
+
+        localStorage.setItem(
+          'favoriteMovies',
+          JSON.stringify([...favorites]),
+        );
+
+        updateButton();
+        renderFavoriteList();
+      });
+    });
+
+  renderFavoriteList();
+
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'filmee-reviews' || event.key === 'favoriteMovies') {
+      renderFavoriteList();
+    }
+  });
+</script>
+
+<script>
+  type FavoriteMovie = {
+    id: string;
+    title: string;
+    posterPath?: string | null;
+  };
+
+  const myList = document.querySelector<HTMLElement>('[data-my-list]');
+
+  const renderMyList = () => {
+    if (!myList) return;
+
+    const favoriteIds = JSON.parse(
+      localStorage.getItem('favoriteMovies') ?? '[]',
+    ) as string[];
+
+    const movieData = JSON.parse(
+      localStorage.getItem('favoriteMoviesData') ?? '{}',
+    ) as Record<string, FavoriteMovie>;
+
+    myList.replaceChildren();
+
+    const movies = favoriteIds
+      .map((id) => movieData[String(id)])
+      .filter(Boolean);
+
+    if (movies.length === 0) {
+      const message = document.createElement('p');
+      message.className = 'text-slate-400';
+      message.textContent = 'お気に入りはありません。';
+      myList.appendChild(message);
+      return;
+    }
+
+    movies.forEach((movie) => {
+      const link = document.createElement('a');
+      link.href = `/movie/${movie.id}`;
+      link.className =
+        'flex items-center gap-4 rounded-lg p-2 text-white hover:bg-slate-800';
+
+      const image = document.createElement('img');
+      image.src = movie.posterPath
+        ? `https://image.tmdb.org/t/p/w185${movie.posterPath}`
+        : '';
+      image.alt = movie.title;
+      image.className = 'h-20 w-14 rounded object-cover';
+      image.loading = 'lazy';
+
+      const title = document.createElement('span');
+      title.className = 'font-bold';
+      title.textContent = movie.title;
+
+      link.append(image, title);
+      myList.appendChild(link);
+    });
+  };
+
+  renderMyList();
+  window.addEventListener('pageshow', renderMyList);
+</script>
